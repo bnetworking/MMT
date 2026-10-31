@@ -64,6 +64,10 @@ ns.defaults = {
         macros = {
             { name = "FTL Follow", body = "/follow {FTL}" },
             { name = "FTL Assist", body = "/assist {FTL}" },
+            -- examples for ability macros (names: at most 16 characters)
+            { name = "Pri: Lesser Heal", body = "/cast [@{FTL},nodead] Lesser Heal" },
+            { name = "Dru: Heal Touch", body = "/cast [@{FTL},nodead] Healing Touch" },
+            { name = "Pal: Holy Light", body = "/cast [@{FTL},nodead] Holy Light" },
         },
     },
 
@@ -282,11 +286,25 @@ end
 
 function ns.CurrentProfileName() return ns.profileName or DEFAULT end
 
+-- MMT 0.9.40: the heal examples, once, for profiles made before them
+local function AddMacroExamples(p)
+    local ftl = p.ftl
+    if type(ftl) ~= "table" or ftl.examples == 1 or type(ftl.macros) ~= "table" then return end
+    ftl.examples = 1
+    local have = {}
+    for _, m in ipairs(ftl.macros) do if m.name then have[m.name] = true end end
+    for i = 3, #ns.defaults.ftl.macros do
+        local m = ns.defaults.ftl.macros[i]
+        if not have[m.name] then ftl.macros[#ftl.macros + 1] = { name = m.name, body = m.body } end
+    end
+end
+
 local function Activate(name)
     if not MMTDB.profiles[name] then name = DEFAULT end
     local p = MMTDB.profiles[name]
     ConvertProfile(p)
     MergeDefaults(p, ns.defaults)
+    AddMacroExamples(p)
     ns.db = p
     ns.profileName = name
     ns.Fire("PROFILE_CHANGED")
