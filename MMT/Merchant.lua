@@ -189,9 +189,9 @@ ns.On("MERCHANT_CLOSED", function()
 end)
 
 -- the leader's client: notes from the team
-ns.Listen("TEAM_MESSAGE", function(key, sender, text)
+ns.Listen("TEAM_MESSAGE", function(key, sender, text, _, channel)
     local kind, a, b = text:match("^NOTE:(%u+):(%d+):?(%w*)")
-    if not kind or not ns.IsNoticeLeaderHere() then return end
+    if not kind or not ns.AcceptNotice(channel) then return end
     local who = ns.ShownName(key)
     if kind == "SELL" then
         local count = tonumber(a)

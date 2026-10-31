@@ -1,6 +1,6 @@
 -- MMT: mount and dismount with the leader (as in EMA and MAMA).
 --
--- The leader (FTL leader, or the group leader without one) tells the team
+-- The leader (the FTL leader; without one online, the group leader if in the team, else the first online team member) tells the team
 -- when it starts summoning a mount (MOUNT:<mount ID>) and when it dismounts
 -- (DISMOUNT). Team members then summon the same mount if they have it, else
 -- one of the same kind (ground / flying / ...), else a random favourite; and

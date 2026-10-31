@@ -38,9 +38,9 @@ local function Text(key, kind, a, b)
     return ("%s's quest log is almost full (%d/%d)."):format(who, a, b)
 end
 
-ns.Listen("TEAM_MESSAGE", function(key, sender, text)
+ns.Listen("TEAM_MESSAGE", function(key, sender, text, _, channel)
     local kind, a, b = text:match("^NOTE:WARN:(%u+):(%d+):?(%d*)$")
-    if not kind or not ns.IsNoticeLeaderHere() then return end
+    if not kind or not ns.AcceptNotice(channel) then return end
     Show(Text(key, kind, tonumber(a), tonumber(b)))
 end)
 

@@ -524,22 +524,53 @@ function ns.SendAlert(msg, prefix)
     end
 end
 
--- Notes for the leader's chat (flights taken, items sold, repairs): the FTL
--- leader, or the group leader when no FTL leader is known. Returns "self"
--- (nothing sent) when this character is that leader.
-function ns.IsNoticeLeaderHere()
+-- Notes for the leader's chat (flights taken, items sold, repairs, warnings):
+-- who gets them, in this order:
+--   1. the FTL leader, when online,
+--   2. the group leader, if a team member,
+--   3. the first online team member in team order.
+-- Returns the team key (nil only without a team).
+function ns.NoticeLeader()
     local leader = ns.FTLLeader and ns.FTLLeader()
-    if leader then return ns.IsSelf(leader) end
-    if IsInGroup() then return UnitIsGroupLeader("player") and true or false end
-    return true
+    leader = leader and (ns.Resolve(leader) or leader)
+    if leader and ns.IsOnline(leader) then return leader end
+    if IsInGroup() then
+        if UnitIsGroupLeader("player") then
+            local me = ns.Resolve(ns.PlayerFull())
+            if me then return me end
+        else
+            for _, unit in ipairs(ns.GroupUnits()) do
+                if UnitIsGroupLeader(unit) and not UnitIsUnit(unit, "player") then
+                    local _, _, key = ns.SplitUnit(unit)
+                    key = key and ns.Resolve(key)
+                    if key then return key end
+                    break
+                end
+            end
+        end
+    end
+    for _, key in ipairs(ns.SortedMembers()) do
+        if ns.IsOnline(key) then return key end
+    end
+end
+
+-- true when this character gets the notes (no team: always)
+function ns.IsNoticeLeaderHere()
+    local key = ns.NoticeLeader()
+    return key == nil or ns.IsSelf(key)
+end
+
+-- receiving a note: whispered notes were meant for this client (the sender
+-- picked it); notes to the whole team are handled by the notice leader
+function ns.AcceptNotice(channel)
+    return channel == "WHISPER" or ns.IsNoticeLeaderHere()
 end
 
 function ns.TellLeader(msg)
     if not ns.db then return end
-    local leader = ns.FTLLeader and ns.FTLLeader()
-    if leader then return ns.SendToLeader(msg, "NORMAL") end
-    if ns.IsNoticeLeaderHere() then return "self" end
-    ns.SendToTeam(msg, true, "NORMAL")   -- each receiver checks whether it is the group leader
+    local key = ns.NoticeLeader()
+    if not key or ns.IsSelf(key) then return "self" end
+    Send(msg, "WHISPER", ns.WhisperTarget(key), "NORMAL")
     return true
 end
 
@@ -698,7 +729,8 @@ Receive = function(prefix, text, channel, sender)
         ns.Fire("STATUS_CHANGED")
         return
     end
-    if key then ns.Fire("TEAM_MESSAGE", key, sender, text, scope) end -- item compare data etc.; scope: nil | "LEADER" | "FOLLOWERS"
+    -- item compare data etc.; scope: nil | "LEADER" | "FOLLOWERS"; channel: WHISPER, PARTY, ...
+    if key then ns.Fire("TEAM_MESSAGE", key, sender, text, scope, channel) end
 end
 
 ---------------------------------------------------------------------------

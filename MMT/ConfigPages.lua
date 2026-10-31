@@ -802,7 +802,7 @@ ns.RegisterPage("alerts", "Alerts", function(page)
     L:Slider("Check after combat (seconds)", 1, 30, 1, gfd, sfd)
 
     L:Header("Bags and quest log")
-    L:Note("Warns the leader (FTL leader, or the group leader) when a character runs out of room.")
+    L:Note("Warns the leader (the FTL leader; without one online, the group leader if in the team, else the first online team member) when a character runs out of room.")
     local gwb, swb = Opt("warn", "bags")
     L:Check("Bags almost full", gwb, swb, "Once when a character gets down to the free slots below, and once more when its bags are full.")
     local gwba, swba = Opt("warn", "bagsAt")
@@ -1090,12 +1090,12 @@ ns.RegisterPage("automations", "Automations", function(page)
         "When a team member picks a destination at a flight master, every team member that is talking to a flight master too (flight map open, or opened within 5 seconds) flies to the same destination. Needs MMT on every client.")
     R:Check("Print to chat", Opt("taxi", "report"))
     local gtl, stl = Opt("taxi", "tellLeader")
-    R:Check("Tell the leader", gtl, stl, "The leader's chat says who took the flight too, and who couldn't (FTL leader, or the group leader without one).")
+    R:Check("Tell the leader", gtl, stl, "The leader's chat says who took the flight too, and who couldn't (the FTL leader; without one online, the group leader if in the team, else the first online team member).")
 
     R:Header("Mounts")
     local gmo, smo = Opt("mount", "mount")
     R:Check("Mount up with the leader", gmo, smo,
-        "When the leader (FTL leader, or the group leader without one) mounts, every team member nearby mounts too: the same mount if it has it, else one of the same kind, else a random favourite. Hold Shift while mounting to ride alone.")
+        "When the leader (the FTL leader; without one online, the group leader if in the team, else the first online team member) mounts, every team member nearby mounts too: the same mount if it has it, else one of the same kind, else a random favourite. Hold Shift while mounting to ride alone.")
     local gdm, sdm = Opt("mount", "dismount")
     R:Check("Dismount with the leader", gdm, sdm,
         "When the leader dismounts, every team member dismounts too, never in the air. Hold Shift while dismounting to do it alone.")
@@ -1145,7 +1145,7 @@ ns.RegisterPage("trade", "Trade / Mail / Vendor", function(page)
     L:Check("Use guild funds if allowed", gg, sg, "Falls back to your own gold.")
     L:Check("Print results to chat", Opt("merchant", "report"))
     local gml, sml = Opt("merchant", "tellLeader")
-    L:Check("Tell the leader", gml, sml, "Items sold and repairs of the other characters are posted in the leader's chat (FTL leader, or the group leader without one).")
+    L:Check("Tell the leader", gml, sml, "Items sold and repairs of the other characters are posted in the leader's chat (the FTL leader; without one online, the group leader if in the team, else the first online team member).")
     local gm, sm = Opt("merchant", "moneyFormat")
     L:Cycle("Money format", {
         { value = "text",  text = "1 gold 2 silver" },

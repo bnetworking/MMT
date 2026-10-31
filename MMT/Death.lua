@@ -118,9 +118,9 @@ ns.Listen("TEAM_MESSAGE", function(key, sender, text)
 end)
 
 -- the leader's chat: who can't (yet)
-ns.Listen("TEAM_MESSAGE", function(key, sender, text)
+ns.Listen("TEAM_MESSAGE", function(key, sender, text, _, channel)
     local seconds, why = text:match("^NOTE:DEATH:(%d+):(%a)$")
-    if not why or not ns.IsNoticeLeaderHere() then return end
+    if not why or not ns.AcceptNotice(channel) then return end
     local who = ns.ShownName(key)
     if why == "e" then ns.Print("|cffff6666%s can't release during a boss fight.|r", who)
     elseif why == "a" then ns.Print("|cffff6666%s isn't at the corpse.|r", who)

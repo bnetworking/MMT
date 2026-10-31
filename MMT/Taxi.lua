@@ -79,9 +79,9 @@ local function Take(name, fromKey)
 end
 
 -- the leader's client: notes from the team
-ns.Listen("TEAM_MESSAGE", function(key, sender, text)
+ns.Listen("TEAM_MESSAGE", function(key, sender, text, _, channel)
     local okFlag, rest = text:match("^NOTE:TAXI:([01]):(.+)$")
-    if not okFlag or not ns.IsNoticeLeaderHere() then return end
+    if not okFlag or not ns.AcceptNotice(channel) then return end
     local who = ns.ShownName(key)
     if okFlag == "1" then
         ns.Print("%s flies to %s too.", who, rest)

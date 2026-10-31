@@ -5,7 +5,7 @@
 # MMT - Manage My Team
 
 A lean multiboxing assistant for World of Warcraft: Forever (interface 16001).
-Version 0.9.38: core addon (MMT) plus optional modules (MMT_*).
+Version 0.9.39: core addon (MMT) plus optional modules (MMT_*).
 To install, download the repository (Code > Download ZIP) and copy the four `MMT*` folders.
 
 ## Install
@@ -108,7 +108,7 @@ Saved data from MMT 0.1.x is converted automatically.
   client (the character you play); with no leader known, from every client.
   Follow, crowd control and layer hop messages go to the FTL leader first (whispered,
   highest priority) and then to the rest of the team.
-  "Bags and quest log": the leader (FTL leader, or the group leader) gets a chat line,
+  "Bags and quest log": the leader (the FTL leader; without one online, the group leader if in the team, else the first online team member) gets a chat line,
   and optionally a raid warning and sound, when a character gets down to a set number
   of free bag slots (default 2) or free quest slots (default 3), and again when full.
 - **FTL** (Focusless, Targetless, Leaderless): macros that always target the character
@@ -244,7 +244,7 @@ Saved data from MMT 0.1.x is converted automatically.
     revives when it ends). The panel lists who is dead or a ghost and who can revive now.
   - "Accept automatically": resurrections and warlock summons, each from team, friends,
     guild and/or anyone.
-  The leader is the FTL leader, or the group leader when no FTL leader is known.
+  The leader is the FTL leader; without one online, the group leader if in the team, else the first online team member (team order).
 - **Trade / Mail / Vendor**:
   - Vendor: repair (optionally with guild funds), sell grey items, print results, tell
     the leader (sales and repairs of the other characters), money format.
