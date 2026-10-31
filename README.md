@@ -148,7 +148,8 @@ Saved data from MMT 0.1.x is converted automatically.
     "Current account", "Account of X" (each account the team sent) or "All accounts";
     hover a day for its value. The axis goes in round whole-gold steps ("10k g", "1.2M g").
   - Accounts: every WoW account keeps its own saved variables, so MMT gives each one a
-    random id. Clients send a summary of their account to the team (characters with gold
+    random id. When two clients send the same id (saved variables copied from one account
+    to another), the one with the later name takes a new id and sends again. Clients send a summary of their account to the team (characters with gold
     and kills, daily totals, top kills and killers; compressed when possible) and keep the
     latest of every other account, named after the team member that sent it. Summaries are never
     sent in real time: a change only marks them as changed; they go out after combat, at

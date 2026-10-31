@@ -44,11 +44,17 @@ mod.DAYS = 60
 -- Store
 ---------------------------------------------------------------------------
 -- M.store.accountId, .chars[key], .accounts[id], .memberAccount[teamKey]
+local function NewId(old)
+    local id
+    repeat
+        id = ("%04x%04x"):format(math.random(0, 0xffff), math.random(0, 0xffff))
+    until id ~= old
+    return id
+end
+
 local function Store()
     local s = M.store
-    if not s.accountId then
-        s.accountId = ("%04x%04x"):format(math.random(0, 0xffff), math.random(0, 0xffff))
-    end
+    if not s.accountId then s.accountId = NewId() end
     s.chars = s.chars or {}
     s.accounts = s.accounts or {}
     s.memberAccount = s.memberAccount or {}
@@ -381,8 +387,24 @@ M:Listen("TEAM_MESSAGE", function(key, sender, text)
         return
     end
     local s = Store()
+    if t.id == s.accountId then
+        -- Only one character of a game account can be online, so another
+        -- client sending our id means its saved variables were copied from
+        -- ours. The client with the later name takes a new id and answers.
+        local me = MMT.PlayerFull()
+        if me and key ~= me and me > key then
+            s.accountId = NewId(s.accountId)
+            s.chars[key] = nil   -- the sender's character is never ours
+            M:Debug("account id shared with %s (copied saved variables): new id %s", MMT.Repr(key), s.accountId)
+            MMT.Print("Statistics: this account had the same id as %s's (copied settings) and got a new one.", MMT.ShownName(key))
+            mod.SendNow()
+            MMT.SendToTeam("STQ", true, "NORMAL")
+        else
+            M:Debug("account id shared with %s: waiting for its new id", MMT.Repr(key))
+        end
+        return
+    end
     s.memberAccount[key] = t.id
-    if t.id == s.accountId then return end   -- a character of this account on another client
     s.accounts[t.id] = {
         id = t.id, owner = key, at = time(),
         chars = type(t.chars) == "table" and t.chars or {},
@@ -423,7 +445,7 @@ M.Report = function(_, add)
     local nChars, nAcc = 0, 0
     for _ in pairs(s.chars) do nChars = nChars + 1 end
     for _ in pairs(s.accounts) do nAcc = nAcc + 1 end
-    add(("-- Statistics 1.0.8  account=%s characters=%d otherAccounts=%d gold=%s kills=%s share=%s"):format(
+    add(("-- Statistics 1.0.9  account=%s characters=%d otherAccounts=%d gold=%s kills=%s share=%s"):format(
         s.accountId, nChars, nAcc, tostring(M.db.trackGold), tostring(M.db.trackKills), tostring(M.db.share)))
     for key, c in pairs(s.chars) do
         local n = 0
@@ -433,6 +455,9 @@ M.Report = function(_, add)
     end
     for id, a in pairs(s.accounts) do
         add(("  account %s from %s, %d s ago"):format(id, MMT.Repr(a.owner), time() - (a.at or 0)))
+    end
+    for key, id in pairs(s.memberAccount) do
+        add(("  member %s: account %s"):format(MMT.Repr(key), tostring(id)))
     end
     if mod.KillReport then mod.KillReport(add) end
 end
