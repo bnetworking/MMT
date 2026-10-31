@@ -85,12 +85,28 @@ function mod.Char(key)
         c = { days = {}, kills = {}, deaths = {}, killTotal = 0, deathTotal = 0 }
         chars[key] = c
     end
+    c.acc = Store().accountId   -- logged in on this account
     c.days = c.days or {}
     c.kills = c.kills or {}
     c.deaths = c.deaths or {}
     c.killTotal = c.killTotal or 0
     c.deathTotal = c.deathTotal or 0
     return c
+end
+
+-- Characters count for this account only once they logged in here (c.acc
+-- is this account's id). Records without it came with saved variables copied
+-- from another account, or from before 1.0.10: they are dropped. The
+-- character that is logged in now is always kept.
+function mod.CleanChars()
+    local s, me = Store(), MMT.PlayerFull()
+    if not me then return 0 end
+    local n = 0
+    for key, c in pairs(s.chars) do
+        if key ~= me and c.acc ~= s.accountId then s.chars[key] = nil; n = n + 1 end
+    end
+    if s.chars[me] then s.chars[me].acc = s.accountId end
+    return n
 end
 
 local function Prune(days, first)
@@ -394,7 +410,7 @@ M:Listen("TEAM_MESSAGE", function(key, sender, text)
         local me = MMT.PlayerFull()
         if me and key ~= me and me > key then
             s.accountId = NewId(s.accountId)
-            s.chars[key] = nil   -- the sender's character is never ours
+            mod.CleanChars()   -- the old list is the other account's as well
             M:Debug("account id shared with %s (copied saved variables): new id %s", MMT.Repr(key), s.accountId)
             MMT.Print("Statistics: this account had the same id as %s's (copied settings) and got a new one.", MMT.ShownName(key))
             mod.SendNow()
@@ -424,6 +440,7 @@ M:On("PLAYER_ENTERING_WORLD", function() C_Timer.After(3, mod.RecordGold) end)
 
 M.OnEnable = function()
     Store()
+    mod.CleanChars()
     C_Timer.After(3, mod.RecordGold)
     C_Timer.After(8, function()
         if not (M.enabled and M.db.share) then return end
@@ -445,7 +462,7 @@ M.Report = function(_, add)
     local nChars, nAcc = 0, 0
     for _ in pairs(s.chars) do nChars = nChars + 1 end
     for _ in pairs(s.accounts) do nAcc = nAcc + 1 end
-    add(("-- Statistics 1.0.9  account=%s characters=%d otherAccounts=%d gold=%s kills=%s share=%s"):format(
+    add(("-- Statistics 1.0.10  account=%s characters=%d otherAccounts=%d gold=%s kills=%s share=%s"):format(
         s.accountId, nChars, nAcc, tostring(M.db.trackGold), tostring(M.db.trackKills), tostring(M.db.share)))
     for key, c in pairs(s.chars) do
         local n = 0
