@@ -642,12 +642,15 @@ ns.RegisterPage("xp", "XP Window", function(page)
         Redraw()
         ArrangeText()
     end
+    local function Now(set) return function(v) set(v); if ns.UpdateXPWindow then ns.UpdateXPWindow() end end end
     local gdm, sdm = Opt("xp", "durability")
+    sdm = Now(sdm)
     L:Cycle("Durability", {
         { value = "LOWEST", text = "Lowest item" },
         { value = "AVERAGE", text = "Average of all items" },
     }, gdm, sdm)
     local ggf, sgf = Opt("xp", "goldFormat")
+    sgf = Now(sgf)
     L:Cycle("Gold", {
         { value = "GOLD", text = "Gold only" },
         { value = "FULL", text = "Gold, silver, copper" },

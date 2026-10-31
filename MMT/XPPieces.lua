@@ -65,6 +65,20 @@ local function RepText(s)
 end
 
 local GOLD_ICON = "|TInterface\\MoneyFrame\\UI-GoldIcon:0:0:1:0|t"
+local SILVER_ICON = "|TInterface\\MoneyFrame\\UI-SilverIcon:0:0:1:0|t"
+local COPPER_ICON = "|TInterface\\MoneyFrame\\UI-CopperIcon:0:0:1:0|t"
+
+-- gold, silver, copper with icons; built here when the client has no coin string
+local function FullCoins(copper)
+    local text = ns.CoinText(copper)
+    if text then return text end
+    local g, sv, c = math.floor(copper / 10000), math.floor(copper / 100) % 100, copper % 100
+    local parts = {}
+    if g > 0 then parts[#parts + 1] = Thousands(g) .. GOLD_ICON end
+    if sv > 0 or g > 0 then parts[#parts + 1] = sv .. SILVER_ICON end
+    parts[#parts + 1] = c .. COPPER_ICON
+    return table.concat(parts, " ")
+end
 local BAG_ICON = "|TInterface\\Icons\\INV_Misc_Bag_08:0:0:0:0:64:64:6:58:6:58|t"
 local DUR_ICON = "|TInterface\\Icons\\Trade_BlackSmithing:0:0:0:0:64:64:6:58:6:58|t"
 
@@ -75,10 +89,7 @@ ns.RegisterXPPiece{ id = "gold", title = "Gold", side = "LEFT", on = true, sampl
     tip = "Gold of the character (format: Gold below).",
     text = function(_, s)
         if not s.money then return nil end
-        if ns.db.xp.goldFormat == "FULL" then
-            local text = ns.CoinText(s.money)
-            if text then return text end
-        end
+        if ns.db.xp.goldFormat == "FULL" then return FullCoins(math.floor(s.money)) end
         return Thousands(math.floor(s.money / 10000)) .. GOLD_ICON
     end }
 ns.RegisterXPPiece{ id = "bags", title = "Free bag slots", side = "LEFT", on = true, sample = BAG_ICON .. " 12",
