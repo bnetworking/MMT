@@ -5,7 +5,7 @@
 # MMT - Manage My Team
 
 A lean multiboxing assistant for World of Warcraft: Forever (interface 16001).
-Version 0.9.41: core addon (MMT) plus optional modules (MMT_*).
+Version 0.9.42: core addon (MMT) plus optional modules (MMT_*).
 To install, download the repository (Code > Download ZIP) and copy the four `MMT*` folders.
 
 ## Install
@@ -113,11 +113,14 @@ Saved data from MMT 0.1.x is converted automatically.
   of free bag slots (default 2) or free quest slots (default 3), and again when full.
 - **FTL** (Focusless, Targetless, Leaderless): macros that always target the character
   you are controlling right now, like `/follow {FTL}` or `/assist {FTL}`. Write them on
-  the FTL page; MMT turns them into account macros ("FTL Follow", "FTL Assist" and "FTL
-  Focus" = `/focus {FTL}` by default; the game sets the focus only on a key press or
-  click, so press it after the leader changed, then `[@focustarget]` works; plus heal examples on the leader: "Pri: Lesser Heal" =
-  `/cast [@{FTL},nodead] Lesser Heal`, "Dru: Heal Touch" (Healing Touch), "Pal: Holy
-  Light"; macro names have at most 16 characters; "Drag to bar" puts one on the cursor) where {FTL} is the leader's name.
+  the FTL page; MMT turns them into account macros where {FTL} is the leader's name
+  ("Drag to bar" puts one on the cursor; macro names have at most 16 characters).
+  Defaults: "FTL Follow" (`/follow {FTL}` + `/focus {FTL}`), "FTL Assist" (`/assist {FTL}`
+  + `/focus {FTL}`) and "FTL Focus" (`/focus {FTL}`): the game sets the focus only on a key
+  press or click, so following or assisting once after a leader change makes the leader
+  the focus, and `[@focustarget]` works. Examples: "Pri: Lesser Heal" =
+  `/cast [@{FTL},nodead] Lesser Heal`, "Dru: Heal Touch" (Healing Touch) and "Sha: Light
+  Bolt" = `/cast [@focustarget,nodead,harm] Lightning Bolt`.
   Lines with {FTL} are left out on the leader's own client (setting). Change the leader
   by clicking a character in the XP window, with the key binding "Make this character
   the leader (FTL)", with `/mmt leader [name]`, or automatically when you move a

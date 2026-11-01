@@ -62,14 +62,14 @@ ns.defaults = {
         crownSide  = "LEFT",    -- LEFT of the name | RIGHT of it
         announce   = true,      -- chat line when the leader changes
         macros = {
-            { name = "FTL Follow", body = "/follow {FTL}" },
-            { name = "FTL Assist", body = "/assist {FTL}" },
+            { name = "FTL Follow", body = "/follow {FTL}\n/focus {FTL}" },
+            { name = "FTL Assist", body = "/assist {FTL}\n/focus {FTL}" },
             -- the leader as focus (the game only sets focus on a key press or click)
             { name = "FTL Focus", body = "/focus {FTL}", since = 2 },
             -- examples for ability macros (names: at most 16 characters)
             { name = "Pri: Lesser Heal", body = "/cast [@{FTL},nodead] Lesser Heal", since = 1 },
             { name = "Dru: Heal Touch", body = "/cast [@{FTL},nodead] Healing Touch", since = 1 },
-            { name = "Pal: Holy Light", body = "/cast [@{FTL},nodead] Holy Light", since = 1 },
+            { name = "Sha: Light Bolt", body = "/cast [@focustarget,nodead,harm] Lightning Bolt", since = 3 },
         },
     },
 
@@ -289,12 +289,28 @@ end
 function ns.CurrentProfileName() return ns.profileName or DEFAULT end
 
 -- default macros added later (since = n) go once into older profiles:
--- 1 = heal examples (0.9.40), 2 = FTL Focus (0.9.41). A macro the player
--- deleted afterwards stays deleted.
+-- 1 = heal examples (0.9.40), 2 = FTL Focus (0.9.41), 3 = Sha: Light Bolt
+-- (0.9.42). A macro the player deleted afterwards stays deleted.
+-- 0.9.42 also: Follow and Assist set the focus too, and "Pal: Holy Light" is
+-- gone; both only where the player left the macro as MMT made it.
+local OLD_DEFAULTS = {
+    ["FTL Follow"] = { "/follow {FTL}", "/follow {FTL}\n/focus {FTL}" },
+    ["FTL Assist"] = { "/assist {FTL}", "/assist {FTL}\n/focus {FTL}" },
+    ["Pal: Holy Light"] = { "/cast [@{FTL},nodead] Holy Light", false },
+}
 local function AddMacroExamples(p)
     local ftl = p.ftl
     if type(ftl) ~= "table" or type(ftl.macros) ~= "table" then return end
     local done = tonumber(ftl.examples) or 0
+    if done < 3 then
+        for i = #ftl.macros, 1, -1 do
+            local m = ftl.macros[i]
+            local change = m.name and OLD_DEFAULTS[m.name]
+            if change and ns.Trim(m.body or "") == change[1] then
+                if change[2] then m.body = change[2] else table.remove(ftl.macros, i) end
+            end
+        end
+    end
     local have, newest = {}, done
     for _, m in ipairs(ftl.macros) do if m.name then have[m.name] = true end end
     for _, m in ipairs(ns.defaults.ftl.macros) do
