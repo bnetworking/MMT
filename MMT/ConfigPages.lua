@@ -205,7 +205,8 @@ ns.RegisterPage("team", "Team", function(page)
     end, "One message on the guild channel reaches every team member in your guild, grouped or not, and the guild roster shows who is online. Team members outside the guild still get whispers. Every guild member running MMT receives the messages too (and ignores them). Turn it on on every client. Needs a guild; switched off at login when this character isn't in one. With it, /mmt sync also sends the settings of the modules when everybody is in your guild.")
     local gf, sf = Opt("comm", "fast")
     C:Check("Faster sending (1200 bytes/s)", gf, sf,
-        "Large transfers (settings sync, item and quest data) go out at up to 1200 instead of 800 bytes per second. Faster, but very large amounts at once can get a client disconnected.")
+        "Increases the amount of data sent between team members for internal communication purposes by up to 50%.\nThis setting should be kept off, because it might cause the server to disconnect you if used excessively.")
+    C:Note("Addons have limits on how much data can be sent to other addons and clients. MMT tries to avoid hitting the threshold, which can make sharing the profile slow.\nFor best performance, join the same guild with all characters and enable \"Use guild channel\".")
     local commInfo = C:Note("")
 
     local P = UI.Column(page, COL2_X, col.y, COL_W)
@@ -244,8 +245,8 @@ ns.RegisterPage("team", "Team", function(page)
             AskReload(v and "Hide your team's names outside MMT too." or "Show your team's real names outside MMT again.",
                 function() sh(v) if ns.PrivacyChanged then ns.PrivacyChanged() end end)
         end,
-        "Replaces your team's names in chat, unit frames (player, target, focus, party, raid), nameplates, unit tooltips and the frames of other addons (e.g. their raid frames) with the names shown above, where the game allows it. Not with \"Full name\". Switching it on or off reloads the UI.")
-    P:Note("Everything in MMT uses this. Macros, invites and whispers keep the real names.")
+        "Requires /reload: MMT will try to obfuscate the names of your team on all Blizzard and other addon frames, including chat, tooltips, player/target/group/raid etc. according to the setting made above.\nIf \"Full name\" is selected, this option automatically switches off.")
+    P:Note("All MMT features (core and modules) will use this setting. If \"Hide names outside MMT\" is enabled, the addon will also try to obfuscate the names there.\nMacros will still carry the full name to work, regardless of this setting.")
 
     page.OnRefresh = function()
         local members = ns.SortedMembers()
@@ -266,7 +267,7 @@ ns.RegisterPage("team", "Team", function(page)
                     or ("Not in your guild (reached by whisper): " .. table.concat(names, ", ")))
             end
         else
-            commInfo:SetText("Team messages go to your group, and by whisper to members outside it. Large transfers go by whisper outside instances.")
+            commInfo:SetText("")
         end
     end
     ns.Listen("STATUS_CHANGED", function() if page:IsVisible() then list:Render(ns.SortedMembers()) end end)

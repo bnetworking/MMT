@@ -324,12 +324,26 @@ local function AddMacroExamples(p)
     ftl.examples = math.max(newest, 4)
 end
 
+-- example roles, once per profile (new and older ones); deleted ones stay deleted
+local EXAMPLE_ROLES = {
+    { name = "Tailor", rules = { { type = "group", group = "cloth" } } },
+    { name = "Enchanter", rules = { { type = "boe" }, { type = "group", group = "enchanting" } } },
+}
+local function AddRoleExamples(p)
+    if p.roleExamples == 1 or type(p.roles) ~= "table" then return end
+    p.roleExamples = 1
+    for _, r in ipairs(EXAMPLE_ROLES) do
+        if not p.roles[r.name] then p.roles[r.name] = { rules = Copy(r.rules) } end
+    end
+end
+
 local function Activate(name)
     if not MMTDB.profiles[name] then name = DEFAULT end
     local p = MMTDB.profiles[name]
     ConvertProfile(p)
     MergeDefaults(p, ns.defaults)
     AddMacroExamples(p)
+    AddRoleExamples(p)
     ns.db = p
     ns.profileName = name
     ns.Fire("PROFILE_CHANGED")
