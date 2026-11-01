@@ -5,7 +5,7 @@
 # MMT - Manage My Team
 
 A lean multiboxing assistant for World of Warcraft: Forever (interface 16001).
-Version 0.9.42: core addon (MMT) plus optional modules (MMT_*).
+Version 0.9.43: core addon (MMT) plus optional modules (MMT_*).
 To install, download the repository (Code > Download ZIP) and copy the four `MMT*` folders.
 
 ## Install
@@ -116,9 +116,9 @@ Saved data from MMT 0.1.x is converted automatically.
   the FTL page; MMT turns them into account macros where {FTL} is the leader's name
   ("Drag to bar" puts one on the cursor; macro names have at most 16 characters).
   Defaults: "FTL Follow" (`/follow {FTL}` + `/focus {FTL}`), "FTL Assist" (`/assist {FTL}`
-  + `/focus {FTL}`) and "FTL Focus" (`/focus {FTL}`): the game sets the focus only on a key
-  press or click, so following or assisting once after a leader change makes the leader
-  the focus, and `[@focustarget]` works. Examples: "Pri: Lesser Heal" =
+  + `/focus {FTL}`): the game sets the focus only on a key press or click, so following or
+  assisting once after a leader change makes the leader the focus, and `[@focustarget]`
+  works. Examples: "Pri: Lesser Heal" =
   `/cast [@{FTL},nodead] Lesser Heal`, "Dru: Heal Touch" (Healing Touch) and "Sha: Light
   Bolt" = `/cast [@focustarget,nodead,harm] Lightning Bolt`.
   Lines with {FTL} are left out on the leader's own client (setting). Change the leader
