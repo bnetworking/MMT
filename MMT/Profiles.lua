@@ -64,10 +64,12 @@ ns.defaults = {
         macros = {
             { name = "FTL Follow", body = "/follow {FTL}" },
             { name = "FTL Assist", body = "/assist {FTL}" },
+            -- the leader as focus (the game only sets focus on a key press or click)
+            { name = "FTL Focus", body = "/focus {FTL}", since = 2 },
             -- examples for ability macros (names: at most 16 characters)
-            { name = "Pri: Lesser Heal", body = "/cast [@{FTL},nodead] Lesser Heal" },
-            { name = "Dru: Heal Touch", body = "/cast [@{FTL},nodead] Healing Touch" },
-            { name = "Pal: Holy Light", body = "/cast [@{FTL},nodead] Holy Light" },
+            { name = "Pri: Lesser Heal", body = "/cast [@{FTL},nodead] Lesser Heal", since = 1 },
+            { name = "Dru: Heal Touch", body = "/cast [@{FTL},nodead] Healing Touch", since = 1 },
+            { name = "Pal: Holy Light", body = "/cast [@{FTL},nodead] Holy Light", since = 1 },
         },
     },
 
@@ -286,17 +288,22 @@ end
 
 function ns.CurrentProfileName() return ns.profileName or DEFAULT end
 
--- MMT 0.9.40: the heal examples, once, for profiles made before them
+-- default macros added later (since = n) go once into older profiles:
+-- 1 = heal examples (0.9.40), 2 = FTL Focus (0.9.41). A macro the player
+-- deleted afterwards stays deleted.
 local function AddMacroExamples(p)
     local ftl = p.ftl
-    if type(ftl) ~= "table" or ftl.examples == 1 or type(ftl.macros) ~= "table" then return end
-    ftl.examples = 1
-    local have = {}
+    if type(ftl) ~= "table" or type(ftl.macros) ~= "table" then return end
+    local done = tonumber(ftl.examples) or 0
+    local have, newest = {}, done
     for _, m in ipairs(ftl.macros) do if m.name then have[m.name] = true end end
-    for i = 3, #ns.defaults.ftl.macros do
-        local m = ns.defaults.ftl.macros[i]
-        if not have[m.name] then ftl.macros[#ftl.macros + 1] = { name = m.name, body = m.body } end
+    for _, m in ipairs(ns.defaults.ftl.macros) do
+        if m.since and m.since > done then
+            if not have[m.name] then ftl.macros[#ftl.macros + 1] = { name = m.name, body = m.body } end
+            newest = math.max(newest, m.since)
+        end
     end
+    ftl.examples = newest
 end
 
 local function Activate(name)
