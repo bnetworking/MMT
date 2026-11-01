@@ -21,6 +21,8 @@ local function Active()
     local p = Settings()
     return p and p.hideOutside and p.nameMode ~= "FULL"
 end
+-- "Hide names outside MMT too" in effect (true/false)
+function ns.PrivacyHidesOutside() return Active() and true or false end
 
 ---------------------------------------------------------------------------
 -- Text replacement

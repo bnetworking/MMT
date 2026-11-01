@@ -304,6 +304,26 @@ local function OnAck(key, sender, id, status)
     elseif base == "ACCEPT" then
         s.answers[nk] = "ACCEPT"
         ns.Print("%s %saccepted|r the %s.", who, OK, s.label)
+        if detail == "R" then
+            s.reload = s.reload or {}
+            if not s.reloadSeen then s.reloadSeen = {} end
+            if not s.reloadSeen[nk] then
+                s.reloadSeen[nk] = true
+                s.reload[#s.reload + 1] = who
+            end
+            if s.reloadTimer then s.reloadTimer:Cancel() end
+            -- one line for everybody that answers within a few seconds
+            s.reloadTimer = C_Timer.NewTimer(3, function()
+                s.reloadTimer = nil
+                local list = s.reload
+                s.reload = {}
+                if #list == 0 then return end
+                local names = #list == 1 and list[1]
+                    or (table.concat(list, ", ", 1, #list - 1) .. " and " .. list[#list])
+                ns.Print("%s %s to reload (/reload) for the changes to take effect (modules or \"Hide names outside MMT too\" changed).",
+                    names, #list == 1 and "needs" or "need")
+            end)
+        end
     elseif base == "DECLINE" then
         s.answers[nk] = "DECLINE"
         ns.Print("%s %sdeclined|r the %s.", who, BAD, s.label)
@@ -381,13 +401,20 @@ local function AskOrAccept(text, label, accept, decline)
     ns.UI.Confirm(text, "Accept settings", accept, "Decline", decline)
 end
 
+-- Module states or "Hide names outside MMT too" changed by a sync: they only
+-- take full effect after a UI reload. Ask here; the sender is told (ACCEPT:R).
+local SYNC_RELOAD_TEXT = "A MMT-module or features got enabled/disabled because of a synchronized profile that require a /reload to properly function.\nDo you want to reload now?"
+local function PrivacyNow() return ns.PrivacyHidesOutside and ns.PrivacyHidesOutside() or false end
+local function AskSyncReload()
+    C_Timer.After(0.2, function() ns.UI.AskReload(SYNC_RELOAD_TEXT, nil, nil, "Yes", "No") end)
+end
+
 -- chat summary after module states were applied
 local function ReportStates(who, changed, reload, missing)
     if changed == 0 then
         ns.Print("Modules: already as on %s.", Name(who))
     else
-        ns.Print("Modules: %d switched as on %s.%s", changed, Name(who),
-            reload and " Reload the UI (/reload) to load the ones switched on." or "")
+        ns.Print("Modules: %d switched as on %s.", changed, Name(who))
     end
     if #missing > 0 then
         ns.Print("On at %s but not installed here: %s.", Name(who), table.concat(missing, ", "))
@@ -425,8 +452,14 @@ local function Complete(t)
         AskOrAccept(("%s wants to switch your modules on and off as on their client.\n\n%s"):format(t.who, StatesText(states)),
             ("Module states from %s"):format(Name(t.who)),
             function()
-                ReportStates(t.who, ns.ApplyModuleStates(states))
-                Answer(t, "ACCEPT")
+                local changed, reload, missing = ns.ApplyModuleStates(states)
+                ReportStates(t.who, changed, reload, missing)
+                if changed > 0 then
+                    Answer(t, "ACCEPT:R")
+                    AskSyncReload()
+                else
+                    Answer(t, "ACCEPT")
+                end
             end,
             function()
                 ns.Print("Module states from %s declined.", Name(t.who))
@@ -485,9 +518,18 @@ local function Complete(t)
             moduleSettings and "" or " Module settings stay as they are."),
         ("Core settings from %s"):format(Name(t.who)),
         function()
-            if ns.ImportCoreSettings(name, data) then
+            local hidBefore = PrivacyNow()
+            ns.privacyReloading = true   -- no extra chat note: the dialog below asks
+            local ok = ns.ImportCoreSettings(name, data)
+            ns.privacyReloading = nil
+            if ok then
                 ns.Print("Core settings (profile \"%s\") from %s imported and activated.", name, Name(t.who))
-                if states then ReportStates(t.who, ns.ApplyModuleStates(states)) end
+                local needReload = PrivacyNow() ~= hidBefore
+                if states then
+                    local changed, reload, missing = ns.ApplyModuleStates(states)
+                    ReportStates(t.who, changed, reload, missing)
+                    if changed > 0 then needReload = true end
+                end
                 if moduleSettings then
                     local n = 0
                     for modName, settings in pairs(moduleSettings) do
@@ -495,7 +537,12 @@ local function Complete(t)
                     end
                     ns.Print("Settings of %d %s from %s applied.", n, n == 1 and "module" or "modules", Name(t.who))
                 end
-                Answer(t, "ACCEPT")
+                if needReload then
+                    Answer(t, "ACCEPT:R")
+                    AskSyncReload()
+                else
+                    Answer(t, "ACCEPT")
+                end
             end
         end,
         function()

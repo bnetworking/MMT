@@ -647,7 +647,8 @@ local confirm
 --   before(): runs on the click, right before the reload (e.g. save a setting)
 --   onCancel(): "Cancel" or Esc
 local reloadFrame
-function UI.AskReload(text, before, onCancel)
+-- yes / no: button labels (default "Reload now" / "Cancel")
+function UI.AskReload(text, before, onCancel, yes, no)
     if InCombatLockdown() then
         ns.Print("The UI can't be reloaded in combat. Try again after the fight (or type /reload).")
         if onCancel then pcall(onCancel) end
@@ -706,6 +707,8 @@ function UI.AskReload(text, before, onCancel)
     end
     local f = reloadFrame
     if f:IsShown() and f.onCancel then pcall(f.onCancel) end
+    f.accept.label:SetText(yes or "Reload now")
+    f.cancel.label:SetText(no or "Cancel")
     f.text:SetText(text .. "\n\n|cff999999(or type /reload)|r")
     f.before, f.onCancel = before, onCancel
     f:Show()

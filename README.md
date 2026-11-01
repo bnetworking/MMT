@@ -5,7 +5,7 @@
 # MMT - Manage My Team
 
 A lean multiboxing assistant for World of Warcraft: Forever (interface 16001).
-Version 0.9.43: core addon (MMT) plus optional modules (MMT_*).
+Version 0.9.44: core addon (MMT) plus optional modules (MMT_*).
 To install, download the repository (Code > Download ZIP) and copy the four `MMT*` folders.
 
 ## Install
@@ -62,8 +62,8 @@ Saved data from MMT 0.1.x is converted automatically.
   Switching "Hide names outside MMT too" on or off (or switching to or from "Full name"
   while it is on) asks to reload the UI right away, because other addons only pick it up
   after a reload; Cancel leaves it as it was. (The game no longer lets addons reload the UI
-  themselves; MMT's "Reload now" buttons are secure macro buttons running /reload.) A profile switch or sync that changes it
-  says in chat that a reload is needed.
+  themselves; MMT's "Reload now" buttons are secure macro buttons running /reload.) A profile switch that changes it
+  says in chat that a reload is needed; a sync that changes it asks to reload.
 - **Roles**: create roles, tick their members, add items (drop one on the slot, or
   click the field and shift-click an item anywhere; IDs and exact names work too),
   rules (all grey, all Bind on Equip, by quality) and item groups (Cloth, Leather,
@@ -299,6 +299,9 @@ Saved data from MMT 0.1.x is converted automatically.
   recipients switch their modules the same way (modules switched on that weren't loaded need a UI reload; modules they don't
   have installed are named in chat). Modules page > "Sync to team" (or
   `/mmt sync modules`) sends only the on/off states.
+  When a sync switches a module on or off, or changes "Hide names outside MMT too", the
+  recipient is asked to reload the UI (Yes / No), and the sender's chat names the
+  characters that need a reload.
 - **Help**: debug tools with a how-to, guides for writing modules and using the team
   communication (with copyable example code), and **Appearance**: a background for the
   settings window (plain looks such as Dark, Dusk, Vignette, Accent or Class glow, Grid,
