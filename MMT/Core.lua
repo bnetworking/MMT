@@ -4,7 +4,7 @@
 local ADDON, ns = ...
 _G.MMT = ns
 ns.title = "MMT"
-ns.version = "1.3.1"
+ns.version = "1.3.2"
 ns.prefix = "MMT"
 ns.LOGO = "Interface\\AddOns\\MMT\\Media\\Logo"   -- the MMT mark (Media/Logo.tga)
 ns.ICON = "Interface\\AddOns\\MMT\\Media\\Icon"   -- the mark on a dark tile (Media/Icon.tga)
@@ -523,15 +523,57 @@ function ns.OnLogin(fn) ns.Listen("LOGIN", fn) end
 -- get / set (optional): the window's place, carried in HUF's profile export /
 -- import, so one HUF import places MMT's windows on every client too
 -- preview (optional): preview(on) when HUF's unlock mode starts / ends (example content)
+local hufSpecs = {}   -- [id] = the spec registered (ns.HUFScaleGrips adds to it)
 function ns.HUFMover(id, label, frame, save, shown, page, get, set, preview)
     local H = _G.HUF
     if type(H) ~= "table" or type(H.RegisterMover) ~= "function" then return false end
-    local ok = pcall(H.RegisterMover, "MMT:" .. id, {
+    local spec = {
         label = "MMT " .. label, frame = frame, save = save, shown = shown,
         settings = page and function() ns.ToggleConfig(page) end,
         get = get, set = set, preview = preview,
-    })
+    }
+    hufSpecs[id] = spec
+    local ok = pcall(H.RegisterMover, "MMT:" .. id, spec)
     return ok
+end
+
+-- HUF's corner grips (unlock mode) resize a window registered with ns.HUFMover by its
+-- scale setting tbl()[key] (lo .. hi): the window keeps its shape. HUFs without grips
+-- ignore it.
+function ns.HUFScaleGrips(id, tbl, key, frame, lo, hi)
+    local H, spec = _G.HUF, hufSpecs[id]
+    if not (spec and type(H) == "table" and type(H.RegisterMover) == "function") then return false end
+    local function Frame() return type(frame) == "function" and frame() or frame end
+    spec.resize = {
+        -- its size on the screen in UIParent's units (HUF's box for another addon's window)
+        get = function()
+            local f = Frame()
+            if not f then return nil end
+            local s = f:GetScale() or 1
+            return (f:GetWidth() or 0) * s, (f:GetHeight() or 0) * s
+        end,
+        set = function(w)
+            local f = Frame()
+            local base = f and f:GetWidth() or 0
+            if base <= 0 or InCombatLockdown() then return end
+            local v = math.floor(math.max(lo or 0.5, math.min(hi or 2, w / base)) * 100 + 0.5) / 100
+            tbl()[key] = v
+            f:SetScale(v)
+        end,
+        done = function() ns.Refresh() end,
+        -- Shift + drag in HUF: the same scale
+        scale = {
+            get = function() return tbl()[key] or 1 end,
+            set = function(v)
+                local f = Frame()
+                if not f or InCombatLockdown() then return end
+                v = math.floor(math.max(lo or 0.5, math.min(hi or 2, v)) * 100 + 0.5) / 100
+                tbl()[key] = v
+                f:SetScale(v)
+            end,
+        },
+    }
+    return pcall(H.RegisterMover, "MMT:" .. id, spec)
 end
 -- get / set for a window whose place is one { point, relPoint, x, y } in a
 -- settings table: set stores it and moves the window there (out of combat)
