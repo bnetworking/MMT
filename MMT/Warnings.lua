@@ -115,12 +115,7 @@ local function Check()
 end
 ns.CheckRoomWarnings = Check
 
-local pending = false
-local function CheckSoon()
-    if pending then return end
-    pending = true
-    C_Timer.After(0.5, function() pending = false Check() end)
-end
+local CheckSoon = ns.Coalesce(function() Check() end, 0.5)   -- (at a vendor: once selling pauses)
 
 ---------------------------------------------------------------------------
 -- Breath: the game's breath bar while it runs down

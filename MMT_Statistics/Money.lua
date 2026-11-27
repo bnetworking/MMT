@@ -78,6 +78,7 @@ local function Money()
     return m
 end
 
+local redrawSoon = MMT.Coalesce(function() if mod.Redraw then mod.Redraw() end end, 0.2)   -- (at a vendor: once selling pauses)
 M:On("PLAYER_MONEY", function()
     local now = Money()
     if not now then return end
@@ -88,7 +89,7 @@ M:On("PLAYER_MONEY", function()
         if cat == "Looted" and delta > 0 and mod.SessionLootMoney then mod.SessionLootMoney(delta) end   -- Session Kill-Details
     end
     last = now
-    if mod.Redraw then mod.Redraw() end
+    redrawSoon()
 end)
 -- the starting point: login and every loading screen (no change is lost or invented)
 M:On("PLAYER_ENTERING_WORLD", function() C_Timer.After(1, function() last = Money() or last end) end)

@@ -242,7 +242,7 @@ local function ScanLooted()
         end
     end
 end
-M:On("BAG_UPDATE_DELAYED", ScanLooted)
+M:On("BAG_UPDATE_DELAYED", MMT.Coalesce(ScanLooted, 0.1))   -- (at a vendor: once selling pauses)
 
 ---------------------------------------------------------------------------
 -- The same item on the team

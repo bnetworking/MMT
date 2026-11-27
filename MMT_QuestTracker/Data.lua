@@ -331,15 +331,8 @@ function mod.Scan(announce)
     end
 end
 
-local pending = false
-function mod.ScanSoon()
-    if pending then return end
-    pending = true
-    C_Timer.After(0.5, function()
-        pending = false
-        if M.enabled then mod.Scan() end
-    end)
-end
+-- (at a vendor: once selling pauses, MMT.Coalesce)
+mod.ScanSoon = MMT.Coalesce(function() if M.enabled then mod.Scan() end end, 0.5)
 
 for _, event in ipairs({ "QUEST_LOG_UPDATE", "QUEST_WATCH_UPDATE", "QUEST_WATCH_LIST_CHANGED", "QUEST_ACCEPTED",
     "QUEST_REMOVED", "QUEST_TURNED_IN", "UNIT_QUEST_LOG_CHANGED" }) do

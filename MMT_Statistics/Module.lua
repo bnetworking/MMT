@@ -489,7 +489,8 @@ M:Listen("TEAM_MESSAGE", function(key, sender, text)
 end)
 
 -- gold
-M:On("PLAYER_MONEY", function() mod.RecordGold() mod.SendSoon() if mod.Redraw then mod.Redraw() end end)
+local redrawSoon = MMT.Coalesce(function() if mod.Redraw then mod.Redraw() end end, 0.2)   -- (at a vendor: once selling pauses)
+M:On("PLAYER_MONEY", function() mod.RecordGold() mod.SendSoon() redrawSoon() end)
 -- Right after login the money may not be known yet: recorded a moment later.
 -- Not at logout: the client already reports 0 then (every change before is
 -- recorded by PLAYER_MONEY anyway).

@@ -411,14 +411,7 @@ local function LookAtBags(announce)
     known = now
 end
 
-local lookPending = false
-M:On("BAG_UPDATE_DELAYED", function()
-    if lookPending then return end
-    lookPending = true
-    C_Timer.After(0.2, function()
-        lookPending = false
-        LookAtBags(M.enabled and M.db.announceStarter)
-    end)
-end)
+-- (at a vendor: once selling pauses, MMT.Coalesce)
+M:On("BAG_UPDATE_DELAYED", MMT.Coalesce(function() LookAtBags(M.enabled and M.db.announceStarter) end, 0.2))
 -- the bags at login are only remembered
 MMT.OnLogin(function() C_Timer.After(2, function() LookAtBags(false) end) end)

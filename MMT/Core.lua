@@ -4,7 +4,7 @@
 local ADDON, ns = ...
 _G.MMT = ns
 ns.title = "MMT"
-ns.version = "1.3.3"
+ns.version = "1.3.4"
 ns.prefix = "MMT"
 ns.LOGO = "Interface\\AddOns\\MMT\\Media\\Logo"   -- the MMT mark (Media/Logo.tga)
 ns.ICON = "Interface\\AddOns\\MMT\\Media\\Icon"   -- the mark on a dark tile (Media/Icon.tga)
@@ -490,12 +490,31 @@ end)
 local callbacks = {}
 -- fn at most once per delay (default 0.15 s), run after the burst: for redraws that
 -- many quick events in a row (e.g. follow spam) would otherwise repeat every frame
+-- At a vendor every sale changes the bags and the money, and the redraws and
+-- scans that follow (Info window, quest tracker, ...) made the client stutter:
+-- clicks then piled up and went out together, and the server drops sales that
+-- come too fast (right-clicked items stayed in the bags). So while a vendor is
+-- open the work waits until selling pauses (SETTLE seconds without a change).
+local SETTLE = 1.5
+ns.atMerchant = false
+ns.On("MERCHANT_SHOW", function() ns.atMerchant = true end)
+ns.On("MERCHANT_CLOSED", function() ns.atMerchant = false end)
+
 function ns.Coalesce(fn, delay)
-    local pending = false
+    local pending, gen = false, 0
     return function()
+        if ns.atMerchant then
+            -- each call pushes the run back (gen: only the newest timer runs it)
+            gen = gen + 1
+            local g = gen
+            pending = true
+            C_Timer.After(SETTLE, function() if g == gen then pending = false fn() end end)
+            return
+        end
         if pending then return end
         pending = true
-        C_Timer.After(delay or 0.15, function() pending = false fn() end)
+        local g = gen
+        C_Timer.After(delay or 0.15, function() if g == gen then pending = false fn() end end)
     end
 end
 
