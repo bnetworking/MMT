@@ -307,10 +307,10 @@ function mod.DejunkTab(panel, PANEL_H)
     for q = 0, 4 do qualities[#qualities + 1] = { value = q, text = MMT.QualityName(q) } end
     local qual = L:Cycle("Never destroy above", qualities, function() return M.db.dejunkMaxQuality or 1 end,
         function(v) M.db.dejunkMaxQuality = v end)
-    UI.Tooltip(qual, "Never destroy above", "Items of a better quality are never destroyed, unless an \"Always destroy\" role lists them. Quest items and items without a sell price are never destroyed either.")
+    UI.Tooltip(qual, "Never destroy above", "Items of a better quality are never destroyed, unless an \"Always destroy\" role lists them. Quest items, items without a sell price and items on the Never Sell List (Trade / Mail / Vendor) are never destroyed either.")
     local team = L:Check("Destroy the same item on the team", function() return M.db.dejunkTeam end,
         function(v) M.db.dejunkTeam = v and true or false end,
-        "When you destroy an item yourself (drag it out of the bags), MMT asks whether the team should destroy it too. If yes, every team member destroys all its stacks of it during its next key presses or clicks (broadcast your keys with ISBoxer and they go as you move). A member only does so with this option on. \"Never destroy\" roles still protect an item.")
+        "When you destroy an item yourself (drag it out of the bags), MMT asks whether the team should destroy it too. If yes, every team member destroys all its stacks of it during its next key presses or clicks (broadcast your keys with ISBoxer and they go as you move). A member only does so with this option on. \"Never destroy\" roles and the Never Sell List still protect an item.")
     local chat = L:Check("Say so in chat", function() return M.db.dejunkChat ~= false end,
         function(v) M.db.dejunkChat = v and true or false end, "Prints what was destroyed and why (only for you).")
     L:Header("Destroy now")

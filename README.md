@@ -406,7 +406,8 @@ team list. Closing it marks it as seen; `/mmt setup` opens it again.
   also in the Loot tab under "Keep free bag slots"): at that many free slots the cheapest
   item that may go is destroyed, one per press, until the bags are above the limit; works
   for every character. "Never destroy above" (White): better items only go when an
-  "Always destroy" role lists them; quest items and items without a sell price never.
+  "Always destroy" role lists them; quest items, items without a sell price and items on
+  the core's Never Sell List (Trade / Mail / Vendor) never.
   "Destroy the same item on the team" (on): when you destroy an item yourself, MMT asks
   whether the team destroys it too (DJX); every member then destroys all its stacks during
   its next key presses (broadcast your keys with ISBoxer and they go as you move).

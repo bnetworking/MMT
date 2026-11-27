@@ -69,6 +69,8 @@ local function Allowed(item, forced)
     if item.locked or item.quest then return false, "quest or locked" end
     local never = InRoles(Cfg().dejunkNever, item.link)
     if never then return false, "Never destroy: " .. never end
+    -- the core's Never Sell List (Trade / Mail / Vendor) keeps it too
+    if MMT.ExcludedItem and MMT.ExcludedItem(item.link, "sell") then return false, "Never Sell List" end
     if InRoles(Cfg().dejunkAlways, item.link) then return true, "always" end
     if forced then return true, "asked" end
     local q = item.quality or Quality(item.id) or 0
