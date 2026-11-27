@@ -30,6 +30,7 @@ end
 local function ToSell(info)
     local m = ns.db.merchant
     local link = info.hyperlink or info.itemID
+    if ns.ExcludedItem(info.itemID or link, "sell") then return false end   -- Never Sell List
     local never = ListRole(m.neverRole)
     if never and ns.RoleWantsItem(never, link) then return false end
     if m.sellGrey and info.quality == POOR then return true end
@@ -281,6 +282,34 @@ end)
 ns.On("MERCHANT_CLOSED", function()
     merchantOpen = false
 end)
+
+---------------------------------------------------------------------------
+-- Never Sell List: an item of it sold anyway (by hand, another addon) is
+-- bought back right away from the vendor's buyback tab, with a chat line.
+-- The game has no way to stop the sale itself, so the newest buyback entry
+-- is watched: when it changes and is a Never Sell item, it is bought back.
+---------------------------------------------------------------------------
+local lastBuyback   -- "count|link" of the newest buyback entry
+local function NewestBuyback()
+    local n = GetNumBuybackItems and GetNumBuybackItems() or 0
+    if n == 0 then return 0, nil end
+    return n, GetBuybackItemLink(n)
+end
+local function CheckBuyback()
+    local n, link = NewestBuyback()
+    local now = n .. "|" .. tostring(link)
+    if now == lastBuyback then return end
+    lastBuyback = now
+    if not (merchantOpen and link and ns.ExcludedItem(link, "sell")) then return end
+    BuybackItem(n)
+    ns.Print("%s is on the Never Sell List: not sold (bought back).", link)
+    C_Timer.After(0.3, function() lastBuyback = nil CheckBuyback() end)
+end
+ns.On("MERCHANT_SHOW", function()
+    local n, link = NewestBuyback()
+    lastBuyback = n .. "|" .. tostring(link)
+end)
+ns.On("MERCHANT_UPDATE", function() if merchantOpen then CheckBuyback() end end)
 
 -- the leader's client: notes from the team (NOTE:SELL and NOTE:REPAIR), one line
 -- per character: when both arrived, else 4 seconds after the first

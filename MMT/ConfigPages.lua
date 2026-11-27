@@ -1864,7 +1864,8 @@ end
 --     are only "never loot" are not listed
 --   view "loot" (Loot Distribution's Never Loot tab): the never-loot items,
 --     added as loot only; "Show Trade / Mail too" (ns.db.exclusionAllColumns)
---     lists every item with all three ticks
+--     lists every trade / mail / loot item with all three ticks
+--   view "sell" (Vendor tile: "Never Sell"): the never-sell items (entry.sell)
 -- The x takes the item off that view only (gone when nothing is left ticked).
 local exclusionWin
 function ns.OpenExclusionList(window, view)
@@ -1892,13 +1893,20 @@ function ns.OpenExclusionList(window, view)
         f.status:SetWidth(W)
         local function List() ns.db.exclusions = ns.db.exclusions or {} return ns.db.exclusions end
         local function LootView() return f.view == "loot" end
+        local function SellView() return f.view == "sell" end
         local function AllColumns() return LootView() and ns.db.exclusionAllColumns and true or false end
         -- the ticks this view adds / takes away
-        local function Mine() return LootView() and { loot = true } or { trade = true, mail = true } end
-        local function Listed(e)
-            if LootView() then return AllColumns() or e.loot == true end
-            return not (e.loot and not e.trade and not e.mail)
+        local function Mine()
+            if SellView() then return { sell = true } end
+            return LootView() and { loot = true } or { trade = true, mail = true }
         end
+        local function Listed(e)
+            if SellView() then return e.sell == true end
+            if LootView() then return e.loot == true or (AllColumns() and (e.trade or e.mail)) or false end
+            return (e.trade or e.mail) and true or false
+        end
+        -- an entry with no tick left goes
+        local function Empty(e) return not (e.trade or e.mail or e.loot or e.sell) end
         local function Shown()
             local t = {}
             for _, e in ipairs(List()) do if Listed(e) then t[#t + 1] = e end end
@@ -2002,7 +2010,7 @@ function ns.OpenExclusionList(window, view)
                 else
                     for k in pairs(Mine()) do e[k] = nil end
                 end
-                if not (e.trade or e.mail or e.loot) then
+                if Empty(e) then
                     local l = List()
                     for j, x in ipairs(l) do if x == e then table.remove(l, j) break end end
                 end
@@ -2041,14 +2049,13 @@ function ns.OpenExclusionList(window, view)
         C:Add(f.tickAll, 0)
         f.clear = ConfirmButton(f, 110, "Clear list", function()
             local l = List()
-            if AllColumns() then
-                wipe(l)
-            else
-                for i = #l, 1, -1 do
-                    local e = l[i]
-                    e.loot = nil
-                    if not (e.trade or e.mail) then table.remove(l, i) end
-                end
+            local all, sell = AllColumns(), SellView()
+            for i = #l, 1, -1 do
+                local e = l[i]
+                if sell then e.sell = nil
+                elseif all then e.trade, e.mail, e.loot = nil, nil, nil
+                else e.loot = nil end
+                if Empty(e) then table.remove(l, i) end
             end
             f.offset = 0
             f.status.Show_("List cleared.")
@@ -2060,21 +2067,23 @@ function ns.OpenExclusionList(window, view)
         f:SetSize(W + 32, -C.y + 10)
 
         f.Layout = function()
-            local loot, all = LootView(), AllColumns()
-            f.title:SetText(loot and "Never Loot List" or "Exclusion List")
-            f.intro:SetText(loot and "Items on this list are never looted by the team: as master looter, Loot Distribution leaves them on the corpse."
+            local loot, all, sell = LootView(), AllColumns(), SellView()
+            f.title:SetText(sell and "Never Sell List" or loot and "Never Loot List" or "Exclusion List")
+            f.intro:SetText(sell and "Items on this list are never sold, regardless if they are part of a role or rule. Sold by hand anyway, MMT buys them back right away and says so in chat."
+                or loot and "Items on this list are never looted by the team: as master looter, Loot Distribution leaves them on the corpse."
                 or "Here you can add items and set them to be never traded or mailed, regardless if they are included in a role.")
-            f.headItem:SetText(loot and not all and "Never Looted Item" or "Excluded Item")
-            local cols = { trade = not loot or all, mail = not loot or all, loot = all }
+            f.headItem:SetText(sell and "Never Sold Item" or loot and not all and "Never Looted Item" or "Excluded Item")
+            local cols = { trade = (not loot and not sell) or all, mail = (not loot and not sell) or all, loot = all }
             for k, h in pairs(f.heads) do h:SetShown(cols[k]) end
             local left = cols.trade and COL_TRADE or (W - 24)
             f.allCheck:SetShown(loot)
             f.allCheck.Refresh()
             f.tickAll:SetShown(all)
-            f.clear:SetShown(loot)
+            f.clear:SetShown(loot or sell)
             f.clear:ClearAllPoints()
             if all then f.clear:SetPoint("LEFT", f.tickAll, "RIGHT", 6, 0) else f.clear:SetPoint("TOPLEFT", f.tickAll, "TOPLEFT") end
-            UI.Tooltip(f.clear, "Clear list", (all and "Takes every item off the Exclusion List: trade, mail and loot."
+            UI.Tooltip(f.clear, "Clear list", (sell and "Takes every item off the Never Sell List."
+                or all and "Takes every item off the Exclusion List: trade, mail and loot."
                 or "Takes every item off the Never Loot List (items that are also never traded or mailed stay for that).")
                 .. " Click twice.")
             local l = Shown()
@@ -2093,7 +2102,8 @@ function ns.OpenExclusionList(window, view)
                         bx:SetShown(cols[k])
                         bx.mark:SetShown(e[k] == true)
                     end
-                    UI.Tooltip(row.del, "Remove", all and "Takes the item off the Exclusion List (trade, mail and loot)."
+                    UI.Tooltip(row.del, "Remove", sell and "The item can be sold again."
+                        or all and "Takes the item off the Exclusion List (trade, mail and loot)."
                         or loot and "The team loots this item again." or "Takes the item off the Exclusion List.")
                     row:Show()
                 else
@@ -2122,6 +2132,10 @@ ns.RegisterPage("trade", "Trade / Mail / Vendor", function(page)
 
     -- Vendor: Buy & Sell (left, full height) ----------------------------------------------
     local vt, V = Tile(page, 0, TOP, TILE_W, 564 + TOP, "Vendor: Buy & Sell", "Interface\\Icons\\INV_Misc_Coin_01")
+    local neverBtn = UI.Button(vt, 110, "Never Sell", function() ns.OpenExclusionList(page:GetParent(), "sell") end)
+    neverBtn:SetHeight(20)
+    neverBtn:SetPoint("TOPRIGHT", vt, "TOPRIGHT", -8, -8)
+    UI.Tooltip(neverBtn, "Never Sell", "Items MMT never sells, even when a role or rule (greys, sell list) includes them. Sold by hand anyway, MMT buys them back right away and says so in chat.")
     V:Header("Vendor")
     V:Check("Sell grey items", Opt("merchant", "sellGrey"))
     V:Check("Repair automatically", Opt("merchant", "repair"))

@@ -5,7 +5,7 @@
 # MMT - Manage My Team
 
 A lean multiboxing assistant for World of Warcraft: Forever (interface 16001).
-Version 1.3.2: core addon (MMT) plus optional modules (MMT_*).
+Version 1.3.3: core addon (MMT) plus optional modules (MMT_*).
 To install, download the repository (Code > Download ZIP) and copy the four `MMT*` folders.
 
 ## Install
@@ -603,6 +603,10 @@ team list. Closing it marks it as seen; `/mmt setup` opens it again.
   - Sell list / never-sell list: roles from the Roles page (items and rules: item,
     quality, Bind on Equip, item group). Items of the sell list are sold too; the
     never-sell list wins, greys included.
+  - Never Sell (button in the Vendor tile's headline): a side window to drop items that
+    are never sold, whatever role, rule or grey setting includes them. An item of it
+    sold by hand (or by another addon) is bought back from the vendor right away, with
+    a chat line.
   - Trade: "Fill trades from role rules" puts the items the partner's roles want into
     the trade window (it was on the Roles page). "Share among team" picks any number
     of roles; the items of each are split evenly among the members that have that role: every member's MMT
