@@ -390,11 +390,24 @@ local function ClassMayHave(key, link)
 end
 mod.ClassMayHave = ClassMayHave
 
+-- is anyone in the loot window of a class the item allows? (no class limit: yes)
+local function AnyCandidateMayHave(slot, link)
+    if not ItemClasses(link) then return true end
+    for i = 1, 40 do
+        local name = GetMasterLootCandidate(slot, i)
+        local key = name and MMT.Resolve(name)
+        if key and ClassMayHave(key, link) then return true end
+    end
+    return false
+end
+
 -- loot window candidate index for a team member; nil also for a member whose class the
--- item doesn't allow (so roles, round robin and quest items all pass them by)
+-- item doesn't allow (so roles, round robin and quest items all pass them by) - but
+-- only while someone of an allowed class is there: with nobody of those classes in the
+-- group the item goes by the other rules (round robin, roles) like any other
 local function CandidateIndex(slot, key)
     local link = GetLootSlotLink and GetLootSlotLink(slot)
-    if link and not ClassMayHave(key, link) then return nil end
+    if link and not ClassMayHave(key, link) and AnyCandidateMayHave(slot, link) then return nil end
     for i = 1, 40 do
         local name = GetMasterLootCandidate(slot, i)
         if name and MMT.Resolve(name) == key then return i end
